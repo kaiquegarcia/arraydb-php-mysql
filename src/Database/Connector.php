@@ -5,6 +5,7 @@ namespace ArrayDB\Database;
 use ArrayDB\Drivers\DriverInterface;
 use ArrayDB\Exceptions\DatabaseException;
 use ArrayDB\Exceptions\MissingFieldException;
+use ArrayDB\Exceptions\UnexpectedResultException;
 use ArrayDB\Exceptions\UnexpectedValueException;
 use ArrayDB\Exceptions\WorthlessVariableException;
 use ArrayDB\Exceptions\WrongTypeException;
@@ -347,16 +348,36 @@ class Connector
         return $result;
     }
 
+    private function getPrimaryKeyColumn(): string
+    {
+        $result = $this->connection->query(
+            "SHOW KEYS FROM `{$this->table}` WHERE Key_name='PRIMARY'"
+        );
+        if(empty($result)) {
+            throw new UnexpectedResultException("Couldn't discover the primary key column name from table '{$this->table}'");
+        }
+        return $result[0]["Column_name"];
+    }
+
     /**
+     * @param bool $safeDelete
      * @return bool
      * @throws DatabaseException
+     * @throws MissingFieldException
+     * @throws UnexpectedResultException
      * @throws UnexpectedValueException
      * @throws WorthlessVariableException
      */
-    public function delete(): bool
+    public function delete($safeDelete = true): bool
     {
         // todo: delete with join (selecting which tables to delete)
         $this->checkConditions();
+        if($safeDelete) {
+            $primaryKeyColumn = $this->getPrimaryKeyColumn();
+            if(!isset($this->conditions[$primaryKeyColumn])) {
+                throw new MissingFieldException("Missing required field '$primaryKeyColumn' (or disable safe delete)");
+            }
+        }
         $query = $this->prepareConditionsQuery($this->getConditions(), " AND ", true);
         $args = $query['args'];
         $query = "DELETE FROM `{$this->table}` WHERE {$query['query']}";
