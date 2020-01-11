@@ -115,6 +115,16 @@ class Connector
     /**
      * @throws WorthlessVariableException
      */
+    private function checkConditions(): void
+    {
+        if (empty($this->conditions)) {
+            throw new WorthlessVariableException("Please populate query conditions");
+        }
+    }
+
+    /**
+     * @throws WorthlessVariableException
+     */
     private function checkFields(): void
     {
         if (empty($this->fields)) {
@@ -337,9 +347,22 @@ class Connector
         return $result;
     }
 
+    /**
+     * @return bool
+     * @throws DatabaseException
+     * @throws UnexpectedValueException
+     * @throws WorthlessVariableException
+     */
     public function delete(): bool
     {
-        // todo
+        // todo: delete with join (selecting which tables to delete)
+        $this->checkConditions();
+        $query = $this->prepareConditionsQuery($this->getConditions(), " AND ", true);
+        $args = $query['args'];
+        $query = "DELETE FROM `{$this->table}` WHERE {$query['query']}";
+        $result = $this->connection->query($query, $args);
+        $this->conditions = [];
+        return $result;
     }
 
     /**

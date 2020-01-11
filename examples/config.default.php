@@ -41,23 +41,23 @@ const joinSettings = [
 
 const joinSelectSelectors = [
     "`myAlias`.`email`",
-    "`anotherAlias`.`another_table_id`"
+    "`anotherAlias`.`another_table_id`",
 ];
 const joinSelectConditions = [
-    ":`myAlias`.ID" => [1,2,3,4,5],
+    ":`myAlias`.ID" => [1, 2, 3, 4, 5],
     "!:`anotherAlias`.ID" => 1000,
 ];
 
 // if you don't have to join, then you don't need to inform anything
 const complexSelectConditions = [
-    ":ID" => [1,2,3,4,5], // ID IN (1,2,3,4,5)
+    ":ID" => [1, 2, 3, 4, 5], // ID IN (1,2,3,4,5)
     "__" => [ // AND (
         "!phone" => "some_phone", // phone != 'some_phone'
         "&___" => [ // OR ( ++++ here we change child append scope to AND
             "ID" => 1, // ID=1
             "~email" => "kaiquegarcia%", // AND email LIKE 'kaiquegarcia%'
         ], // )
-    ]
+    ],
 ];
 
 // result: SELECT * FROM some_table WHERE ID IN (1,2,3,4,5) AND (phone !='some_phone' OR (ID=1 AND email LIKE 'kaiquegarcia%'))
@@ -81,4 +81,9 @@ const updateFields = [
     primaryKeyColumn => "primaryValue",
     "someColumn" => "someNewValue",
     // ....
+];
+
+// delete.php: same table from const table
+const deleteConditions = [
+    primaryKeyColumn => "primaryValue", // put here an id to delete
 ];
