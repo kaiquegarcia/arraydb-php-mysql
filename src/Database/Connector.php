@@ -29,6 +29,9 @@ class Connector
     private $connection = null;
     private $table;
     private $alias;
+    // todo: create an array definition like fields named "conditions"
+    // conditions -> select / join
+    // fields -> save / delete
     private $fields = [];
     private $joinContexts = [];
     private $direction = self::JOIN;
@@ -319,6 +322,11 @@ class Connector
                     ON DUPLICATE KEY UPDATE $updateStatement";
         array_push($args, ...$args);
         return $this->connection->query($query, $args);
+    }
+
+    public function delete(): bool
+    {
+        // todo
     }
 
     /**
