@@ -332,7 +332,9 @@ class Connector
                     VALUES ($insertStatement)
                     ON DUPLICATE KEY UPDATE $updateStatement";
         array_push($args, ...$args);
-        return $this->connection->query($query, $args);
+        $result = $this->connection->query($query, $args);
+        $this->fields = [];
+        return $result;
     }
 
     public function delete(): bool

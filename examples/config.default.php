@@ -16,6 +16,7 @@ const connectorSettings = [
 
 const table = "some_table";
 
+// selects.php
 const simpleSelectConditions = [
     "~email" => "kaiquegarcia%",
 ];
@@ -60,3 +61,24 @@ const complexSelectConditions = [
 ];
 
 // result: SELECT * FROM some_table WHERE ID IN (1,2,3,4,5) AND (phone !='some_phone' OR (ID=1 AND email LIKE 'kaiquegarcia%'))
+
+// saves.php: we will use the table from const table
+const insertFields = [
+    "someColumn" => "someValue",
+    "someColumn2" => "anotherValue",
+    // ....
+];
+
+// as you're inserting, you don't know which id to use, right?
+// we'll call Connector->getLastInsertedId to get that value
+// but as I don't know how you labelled the primary key column
+// I need you to write the column name here:
+const primaryKeyColumn = "ID";
+
+// I'll override the primaryKeyValue here,
+// it's here just to your knowledge ;)
+const updateFields = [
+    primaryKeyColumn => "primaryValue",
+    "someColumn" => "someNewValue",
+    // ....
+];

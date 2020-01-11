@@ -117,7 +117,7 @@ class Mysql
             throw new DatabaseException("Couldn't execute this query");
         }
         $result = $statement->get_result();
-        if($result->field_count) {
+        if($result instanceof mysqli_result && $result->field_count) {
             return $result->num_rows ? (array)$result->fetch_all(MYSQLI_ASSOC) : [];
         }
         return $this->con->affected_rows > 0;
