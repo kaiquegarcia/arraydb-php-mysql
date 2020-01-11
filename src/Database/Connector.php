@@ -29,9 +29,7 @@ class Connector
     private $connection = null;
     private $table;
     private $alias;
-    // todo: create an array definition like fields named "conditions"
-    // conditions -> select / join
-    // fields -> save / delete
+    private $conditions = [];
     private $fields = [];
     private $joinContexts = [];
     private $direction = self::JOIN;
@@ -81,6 +79,11 @@ class Connector
         return $this->alias;
     }
 
+    public function getConditions(): array
+    {
+        return $this->conditions;
+    }
+
     protected function getFields(): array
     {
         return $this->fields;
@@ -94,6 +97,12 @@ class Connector
     public function setAlias(string $alias): self
     {
         $this->alias = $alias;
+        return $this;
+    }
+
+    public function setConditions(array $conditions): self
+    {
+        $this->conditions = $conditions;
         return $this;
     }
 
@@ -149,7 +158,7 @@ class Connector
     }
 
     /**
-     * @param array $fields
+     * @param array $conditions
      * @param string $appendOperator
      * @param bool $usePreparedStatement
      * @param string $stringWrapper
@@ -157,40 +166,40 @@ class Connector
      * @throws UnexpectedValueException
      */
     private function prepareConditionsQuery(
-        array $fields,
+        array $conditions,
         string $appendOperator,
         bool $usePreparedStatement,
         string $stringWrapper = "'"
     ): array
     {
-        if (empty($fields)) {
+        if (empty($conditions)) {
             return [
                 "query" => "",
                 "args" => [],
             ];
         }
         $args = [];
-        $conditions = $append = "";
-        foreach ($fields as $inputName => $inputValue) {
+        $query = $append = "";
+        foreach ($conditions as $inputName => $inputValue) {
             if (is_array($inputValue) && ArrayHelper::hasStringIndex($inputValue)) {
                 $childAppendOperator = strpos($inputName, OperatorDecoder::FORCED_AND_OPERATOR) !== false
                     ? " AND "
                     : " OR ";
                 $subConditions = $this->prepareConditionsQuery($inputValue, $childAppendOperator, $usePreparedStatement);
-                $conditions .= "{$append}({$subConditions['query']})";
+                $query .= "{$append}({$subConditions['query']})";
                 $args = array_merge($args, $subConditions['args']);
             } else {
                 $operator = OperatorDecoder::get($inputName, $inputValue);
                 if ($operator) {
                     $queryData = $operator->getQueryData($inputValue, $usePreparedStatement, $stringWrapper);
-                    $conditions .= $append . $inputName . $queryData['query'];
+                    $query .= $append . $inputName . $queryData['query'];
                     $args = array_merge($args, $queryData['args']);
                 }
             }
             $append = $appendOperator;
         }
         return [
-            "query" => $conditions,
+            "query" => $query,
             "args" => $args,
         ];
     }
@@ -227,7 +236,7 @@ class Connector
                     throw new UnexpectedValueException("Invalid join direction {$context->getDirection()}");
                     break;
             }
-            $conditions = $this->prepareConditionsQuery($context->getFields(), " AND ", false, "");
+            $conditions = $this->prepareConditionsQuery($context->getConditions(), " AND ", false, "");
             $joinQuery .= " JOIN `{$context->getTable()}` AS `{$context->getAlias()}` ON {$conditions['query']}";
         }
         return $joinQuery;
@@ -255,9 +264,9 @@ class Connector
      */
     public function select(array $selectors = []): array
     {
-        $fields = $this->fields;
-        $orderBy = ArrayHelper::getUnset($fields, "orderBy");
-        $limit = ArrayHelper::getUnset($fields, "limit");
+        $conditions = $this->getConditions();
+        $orderBy = ArrayHelper::getUnset($conditions, "orderBy");
+        $limit = ArrayHelper::getUnset($conditions, "limit");
         $joins = $this->getJoinQuery();
         $aliasDot = $aliasAs = "";
         if ($joins) {
@@ -269,8 +278,9 @@ class Connector
             $aliasDot = "$alias.";
             $aliasAs = " AS $alias";
         }
-        $conditions = $this->prepareConditionsQuery($fields, " AND ", true);
-        $where = $conditions['query'];
+        $query = $this->prepareConditionsQuery($conditions, " AND ", true);
+        $where = $query['query'];
+        $args = $query['args'];
         $syntax = "SELECT {selectors} FROM {table} {joins} {conditions} {orderBy} {limit}";
         $query = StringHelper::multiReplace($syntax, [
             "selectors" => $this->prepareSelectors($selectors, $aliasDot, $joins === ""),
@@ -280,8 +290,9 @@ class Connector
             "orderBy" => $orderBy ? " ORDER BY $orderBy" : "",
             "limit" => $limit ? " LIMIT $limit" : "",
         ]);
-        $this->joinContexts = [];
-        return $this->connection->query($query, $conditions['args']);
+        $result = $this->connection->query($query, $args);
+        $this->conditions = $this->joinContexts = [];
+        return $result;
     }
 
     public function getLastInsertedId()
@@ -398,7 +409,7 @@ class Connector
         return $instance
             ->setAlias($settings['alias'])
             ->setDirection($settings['direction'])
-            ->setFields($settings['conditions']);
+            ->setConditions($settings['conditions']);
     }
 
     public static function generateJoinSettings(

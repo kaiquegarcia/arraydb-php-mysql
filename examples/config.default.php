@@ -16,7 +16,7 @@ const connectorSettings = [
 
 const table = "some_table";
 
-const simpleSelectFields = [
+const simpleSelectConditions = [
     "~email" => "kaiquegarcia%",
 ];
 
@@ -42,13 +42,13 @@ const joinSelectSelectors = [
     "`myAlias`.`email`",
     "`anotherAlias`.`another_table_id`"
 ];
-const joinSelectFields = [
+const joinSelectConditions = [
     ":`myAlias`.ID" => [1,2,3,4,5],
     "!:`anotherAlias`.ID" => 1000,
 ];
 
 // if you don't have to join, then you don't need to inform anything
-const complexSelectFields = [
+const complexSelectConditions = [
     ":ID" => [1,2,3,4,5], // ID IN (1,2,3,4,5)
     "__" => [ // AND (
         "!phone" => "some_phone", // phone != 'some_phone'
