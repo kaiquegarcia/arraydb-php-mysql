@@ -161,9 +161,7 @@ class Connector
         if (empty($settings)) {
             throw new UnexpectedValueException();
         }
-        if (!isset($settings['connection'])) {
-            $settings['connection'] = $this->connection;
-        }
+        $settings['connection'] = $this->connection;
         $this->joinContexts[] = self::toJoin($settings);
         return $this;
     }
@@ -448,7 +446,7 @@ class Connector
      * @throws UnexpectedValueException
      * @throws WrongTypeException
      */
-    public static function toJoin(array $settings): self
+    private static function toJoin(array $settings): self
     {
         $settings = self::prepareJoinSettings($settings);
         $instance = new self($settings['table'], $settings['connection']);
