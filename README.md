@@ -9,10 +9,27 @@ Uma abstração para simplificar a ligação entre suas entidades de Orientaçã
 
 ## Instalação
 
-O projeto será incluído no Packagist.org em breve para disponibilizar a instalação via composer. Por ora, o único modo de instalação é baixando  o repositório.
-> NOTA: se você baixar o repositório manualmente, lembre de incluir na execução principal do PHP o autoload do projeto:
->
-> `require_once "pasta/do/repositorio/src/spl_autload.php";`
+### Composer 
+O projeto será incluído no Packagist.org em breve para disponibilizar a instalação mais fácil via composer. Por ora, você precisa adicionar o repositório:
+```json
+{
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/kaiqueg/arraydb-php-mysql"
+    }  
+  ],
+  "require": {
+    "kaiquegarcia/arraydb-php-mysql": "dev-master"  
+  }
+}
+```
+
+### Baixando o repositório
+Após baixar o repositório manualmente, lembre de incluir na execução principal do PHP o **registro de autoload** do projeto:
+```
+require_once "pasta/do/repositorio/src/spl_autload.php";
+```
 
 ## Como usar
 
