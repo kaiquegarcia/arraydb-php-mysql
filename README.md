@@ -1,8 +1,18 @@
 `Lang: pt-BR`
 
 # ArrayDB PHP - Mysql
+[![MIT License](https://img.shields.io/badge/license-MIT-green)](./LICENSE.txt)
+[![PHP Version](https://img.shields.io/badge/php-7.2+-green)]()
+[![Release Version](https://img.shields.io/badge/release-apha.0.0.1-red)]()
 
 Uma abstração para simplificar a ligação entre suas entidades de Orientação a Objeto com seu banco de dados.
+
+## Instalação
+
+O projeto será incluído no Packagist.org em breve para disponibilizar a instalação via composer. Por ora, o único modo de instalação é baixando  o repositório.
+> NOTA: se você baixar o repositório manualmente, lembre de incluir na execução principal do PHP o autoload do projeto:
+>
+> `require_once "pasta/do/repositorio/src/spl_autload.php";`
 
 ## Como usar
 
