@@ -1,0 +1,27 @@
+{
+  "name": "kaiquegarcia/arraydb-php-mysql",
+  "description": "Interface para comunicação com banco de dados (MySQL) baseado em Array (PHP)",
+  "keywords": ["php", "arraydb", "database", "array", "mysql"],
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Kaique Garcia",
+      "email": "kaiquegarciam@gmail.com"
+    }
+  ],
+  "version": "1.0.0",
+  "require": {
+    "php": "^7.2",
+    "ext-json": "*",
+    "ext-simplexml": "*",
+    "ext-curl": "*",
+    "ext-mysqli": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "ArrayDB\\": "src/"
+    },
+    "files": ["src/spl_autoload.php"]
+  }
+}
