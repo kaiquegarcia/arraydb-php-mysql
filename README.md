@@ -295,7 +295,7 @@ O save é um método que tenta inserir um dado e, caso haja conflito de chave pr
 Você pode ler sobre esse conceito na documentação do MySQL: [INSERT ... ON DUPLICATE KEY Statement](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html).
 Resumindo, se você tem um dado e nele há a chave primária de um elemento pré-existente na tabela, chamar o método save fará que o banco de dados tente inserir o dado e, depois de encontrar o conflito, faça uma atualização.
 
-No nosso caso, é algo bem mais simples. Como depende do conflito, não há a necessidade de determinar **condições de busca**, apenas o campo a inserir/alterar.
+Comparando ao caso do **update**, esse método é algo bem mais simples. Por depende do conflito, não há a necessidade de determinar **condições de busca**, apenas o campo a inserir/alterar.
 Por exemplo, se eu quiser **cadastrar** nome=Kaique, sobrenome=Garcia:
 ```php
 $db->setFields([
