@@ -323,6 +323,21 @@ class Connector
         return $values;
     }
 
+    private function getFieldColumns(): string
+    {
+        return "`" . implode("`, `", array_keys($this->fields)) . "`";
+    }
+
+    private function getInsertStatement(array $fieldValues): string
+    {
+        return substr(str_repeat("?,", count($fieldValues)), 0, -1);
+    }
+
+    private function getUpdateStatement(): string
+    {
+        return "`" . implode("`=?, `", array_keys($this->fields)) . "`=?";
+    }
+
     /**
      * @return bool
      * @throws DatabaseException
@@ -332,18 +347,49 @@ class Connector
     public function save(): bool
     {
         $this->checkFields();
-        $columns = "`" . implode("`, `", array_keys($this->fields)) . "`";
         $args = $this->getFieldValues();
-        $insertStatement = substr(str_repeat("?,", count($args)), 0, -1);
-        $updateStatement = "`" . implode("`=?, `", array_keys($this->fields)) . "`=?";
-        $query = "INSERT INTO `{$this->table}`
-                    ($columns)
-                    VALUES ($insertStatement)
-                    ON DUPLICATE KEY UPDATE $updateStatement";
+        $query = "INSERT INTO `{$this->table}` ({$this->getFieldColumns()}) VALUES ({$this->getInsertStatement($args)})
+                    ON DUPLICATE KEY UPDATE {$this->getUpdateStatement()}";
         array_push($args, ...$args);
         $result = $this->connection->query($query, $args);
         $this->fields = [];
         return $result;
+    }
+
+    /**
+     * @return bool
+     * @throws DatabaseException
+     * @throws UnexpectedValueException
+     * @throws WorthlessVariableException
+     */
+    public function insert(): bool
+    {
+        $this->checkFields();
+        $args = $this->getFieldValues();
+        $query = "INSERT INTO `{$this->table}` ({$this->getFieldColumns()}) VALUES ({$this->getInsertStatement($args)})";
+        $result = $this->connection->query($query, $args);
+        $this->fields = [];
+        return $result;
+    }
+
+    /**
+     * @return bool
+     * @throws DatabaseException
+     * @throws UnexpectedValueException
+     * @throws WorthlessVariableException
+     */
+    public function update(): bool
+    {
+        $this->checkFields();
+        $this->checkConditions();
+        $conditions = $this->getConditions();
+        $query = $this->prepareConditionsQuery($conditions, " AND ", true);
+        $args = array_merge($this->getFieldValues(), $query['args']);
+        $query = "UPDATE `{$this->table}` SET {$this->getUpdateStatement()} WHERE {$query['query']}";
+        $result = $this->connection->query($query, $args);
+        $this->fields = $this->conditions = [];
+        return $result;
+
     }
 
     private function getPrimaryKeyColumn(): string
@@ -351,6 +397,7 @@ class Connector
         $result = $this->connection->query(
             "SHOW KEYS FROM `{$this->table}` WHERE Key_name='PRIMARY'"
         );
+        $args = $this->getFieldValues();
         if(empty($result)) {
             throw new UnexpectedResultException("Couldn't discover the primary key column name from table '{$this->table}'");
         }
