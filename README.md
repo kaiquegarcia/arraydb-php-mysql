@@ -7,9 +7,31 @@
 
 Uma abstração para simplificar a ligação entre suas entidades de Orientação a Objeto com seu banco de dados.
 
-## Instalação
+#### Sumário
+[1. Instalação](#1-instalao)
+<br/>[1.1. Via Composer](#11-via-composer)
+<br/>[1.2. Via download](#12-via-download)
+<br/>[2. Como usar](#2-como-usar)
+<br/>[2.1. Select](#21-select)
+<br/>[2.1.1. Sintaxe de Operações](#211-sintaxe-de-operaes)
+<br/>[2.1.2. Operadores](#212-operadores)
+<br/>[2.1.2.1. Operadores de valor](#2121-operadores-de-valor)
+<br/>[2.1.2.2. Operadores de agregação](#2122-operadores-de-agregao)
+<br/>[2.1.3. Aplicando operadores](#213-aplicando-operadores)
+<br/>[2.1.4. Ordenação e limitação](#214-ordenao-e-limitao)
+<br/>[2.1.5. Conjuntos (join)](#215-conjuntos-join)
+<br/>[2.2. Insert](#22-insert)
+<br/>[2.3. Update](#23-update)
+<br/>[2.4. Save (Insert or Update)](#24-save)
+<br/>[2.5. Delete](#25-delete)
+<br/>[2.5.1. Safe delete (primary key obrigatória nas condições)](#251-safe-delete)
+<br/>[2.5.2. Unsafe delete](#252-unsafe-delete)
+<br/>[3. Pendências do projeto](#3-pendncias-do-projeto)
+<br/>[4. Recursos disponíveis](#4-recursos-disponveis)
 
-### Composer 
+## 1. Instalação
+
+### 1.1. Via Composer 
 O projeto será incluído no Packagist.org em breve para disponibilizar a instalação mais fácil via composer. Por ora, você precisa adicionar o repositório:
 ```json
 {
@@ -25,13 +47,13 @@ O projeto será incluído no Packagist.org em breve para disponibilizar a instal
 }
 ```
 
-### Baixando o repositório
+### 1.2. Via download
 Após baixar o repositório manualmente, lembre de incluir na execução principal do PHP o **registro de autoload** do projeto:
 ```
 require_once "pasta/do/repositorio/src/spl_autload.php";
 ```
 
-## Como usar
+## 2. Como usar
 
 A primeira coisa que vocẽ deve fazer depois de importar o projeto é configurar o acesso padrão do banco de dados.
 ```php
@@ -62,7 +84,7 @@ Ou seja, você não está preso à configuração padrão.
 As implementações seguintes foram desenvolvidas para que possa se comunicar usando apenas array's.
 > NOTA: Você deve manter em mente que a sintaxe ainda está sendo desenvolvida e mudanças podem ocorrer ao longo do projeto. Por tanto, se instalar esse repositório via Composer, lembre de especificar a versão que irá utilizar corretamente (seja pela identificação do commit ou pelos futuros releases).
 
-### SELECT
+### 2.1. SELECT
 
 Considere `$db` uma instância da classe `\ArrayDB\Database\Connector`, que estará representando uma conexão a uma tabela do banco de dados.
 Quando você tem a intenção de realizar uma busca, você pode querer:
@@ -84,7 +106,7 @@ $resultado = $db
 
 Em `setConditions` definimos as condições da busca usando a sintaxe de operadores desenvolvida nesse projeto.
 
-#### Sintaxe de Operações
+#### 2.1.1. Sintaxe de Operações
 
 Pode parecer complicado no início, mas na prática é bem simples. Como a comunicação é feita em arrays, usamos os índices para determinar as ações durante a decodificação passo-a-passo das condições de busca.
 
@@ -120,7 +142,7 @@ $db->setConditions([
 ]);
 // resultado = WHERE nome='Kaique' AND (sobrenome='Garcia' OR (email='...' AND telefone='(..) ...'))
 ```
-#### Operadores
+#### 2.1.2. Operadores
 No exemplo acima, temos `&` como uma identificação coringa, mas na realidade ele é um exemplo da sintaxe de operadores desse projeto.
 
 Tudo é definido nos índices do array. Por exemplo, o coringa `&` não precisa ser escrito dessa forma. Poderia ser qualquer coisa, desde que tenha o `&` no índice e o valor seja um array com índices do tipo `string`.
@@ -128,7 +150,7 @@ Poderia ser `&_1`, `&_2`, `...`, afinal, não podemos repetir índices no array 
 
 Da mesma forma, os operadores são atrelados diretamente no nome da variável que está buscando e cada um funciona de uma forma diferente. Podemos separar, portanto, os operadores em duas definições: **operadores de valor** e **operador de agregação**.
 
-##### Operadores de valor
+##### 2.1.2.1. Operadores de valor
 Esses são os operadores que influenciam em um único dado e esperam somente isso.
 
 | Operador | Ação | Exemplo |
@@ -142,7 +164,7 @@ Esses são os operadores que influenciam em um único dado e esperam somente iss
 | ! | Diff | isso != daquilo |
 | = | Equal | isso = aquilo (operador padrão) |
 
-##### Operadores de agregação
+##### 2.1.2.2. Operadores de agregação
 Esse são os operadores que infuenciam um conjunto de dados e esperam um array de dados para tratar.
 
 | Operador | Ação | Exemplo |
@@ -150,7 +172,7 @@ Esse são os operadores que infuenciam um conjunto de dados e esperam um array d
 | !: | NotIn | isso NOT IN (...) |
 | : | In | isso IN (...) |
 
-##### Aplicando operadores
+#### 2.1.3. Aplicando operadores
 ```php
 $db->setConditions([
     "!nome" => "Kaique", // nome != 'Kaique'
@@ -182,7 +204,7 @@ $result = $db->setConditions(["nome" => "Kaique"])->select([
 // SELECT nome, sobrenome, telefone FROM table_name WHERE nome='Kaique'
 ``` 
 
-#### Ordenação e limitação
+#### 2.1.4. Ordenação e limitação
 No caso das buscas, se quiser definir ordenação ou limitação, use as palavras-chaves `orderBy` e `limit` como condições da busca:
 ```php
 $result = $db->setConditions([
@@ -193,7 +215,7 @@ $result = $db->setConditions([
 // SELECT * FROM table_name WHERE nome='Kaique' ORDER BY sobrenome DESC LIMIT 0,10
 ```
 
-#### Conjuntos (join)
+#### 2.1.5. Conjuntos (join)
 Ao considerar o cenário de conjuntos (join), é preciso manter em mente que você será obrigado a determinar um apelido (alias) pra cada tabela e usar esses apelidos nas definições de condições e campos buscados (selectors).
 
 Nesse caso, o primeiro passo após instanciar um `\ArrayDB\Database\Connector` é definir seu apelido (alias):
@@ -243,15 +265,94 @@ Quanto a direção dos conjuntos, você pode escolher uma das constantes de JOIN
 
 Feito isso, os demais métodos para realizar a busca são iguais, apenas lembre-se de usar os apelidos (alias) corretamente!
 
-### INSERT / UPDATE
+### 2.2. INSERT
 
-`TO-DO`
+O conceito do INSERT aqui é mais simples que a busca, pois não é algo condicionado. Logo, você precisa apenas determinar os campos e os valores. Por exemplo, se eu quiser inserir nome=Kaique e sobrenome=Garcia na tabela:
+```php
+$db->setFields([
+    "nome" => "Kaique",
+    "sobrenome" => "Garcia",
+])->insert();
+```
+Simples assim, basta informar todos os campos obrigatórios para o INSERT no seu banco de dados.
 
-### DELETE
+### 2.3. UPDATE
 
-`TO-DO`
+No caso de uma atualização explícita (onde não há tentativa de insert), há uma pequena semelhança entre a inserção e a busca, pois o **update** precisa dos campos a alterar e das condições dos elementos que receberão a alteração.
+Por exemplo, se eu quiser definir o sobrenome=Sanchez para todos que tiverem o nome=Kaique, eu precisaria fazer:
+```php
+$db->setFields([
+    "sobrenome" => "Sanchez"
+])->setConditions([
+    "nome" => "Kaique"
+])->update();
+```
+Note que a [sintaxe de operações](#211-sintaxe-de-operaes) de busca também funciona, mas serve somente para as condições, não para os valores alterados.
 
-## Pendências do projeto
+### 2.4. SAVE
+
+O save é um método que tenta inserir um dado e, caso haja conflito de chave primária, força uma alteração.
+Você pode ler sobre esse conceito na documentação do MySQL: [INSERT ... ON DUPLICATE KEY Statement](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html).
+Resumindo, se você tem um dado e nele há a chave primária de um elemento pré-existente na tabela, chamar o método save fará que o banco de dados tente inserir o dado e, depois de encontrar o conflito, faça uma atualização.
+
+No nosso caso, é algo bem mais simples. Como depende do conflito, não há a necessidade de determinar **condições de busca**, apenas o campo a inserir/alterar.
+Por exemplo, se eu quiser **cadastrar** nome=Kaique, sobrenome=Garcia:
+```php
+$db->setFields([
+    "nome" => "Kaique",
+    "sobrenome" => "Garcia",
+])->save();
+```
+E depois, mais tarde, mudar o sobrenome para "Sanchez", supondo que esse registro está sob `id=6`:
+```php
+$db->setFields([
+    "id" => 6,
+    "sobrenome" => "Sanchez"
+])->save();
+```
+
+O benefício desse método é que a abstração remove a necessidade de enviar todos os campos. Em casos de alteração, você pode enviar só a identificação e os valores alterados.
+> Nota: se há o conhecimento explícito de que é uma alteração e não um cadastro, é recomendado usar o método [update](#23-update), pois custa menos ao seu banco de dados.
+
+### 2.5. DELETE
+
+> Nota: Há em nossa [lista de pendências](#3-pendncias-do-projeto) um item sobre delete com join, porém não é exatamente uma necessidade para o projeto. Entretanto, talvez algumas pessoas precisem e por isso será desenvolvido em algum momento.
+
+Para excluir um dado é bem simples, basta informar as condições de busca de acorodo com a [sintaxe de operações](#211-sintaxe-de-operaes) e os dados que forem encontrados serão excluídos.
+
+Entretanto, pode ser interessante para alguns projetos excluir somente se houver uma chave primária informada nas condições.
+
+
+### 2.5.1. SAFE DELETE
+
+Ativado por padrão, não precisa fazer muito além de definir as condições e executar:
+```php
+$db->setConditions([
+    "id" => 6,
+    "nome" => "Marcos"
+])->delete();
+```
+
+No caso acima, não vai excluir nada pois o registro `6` dos exemplostem o nome 'Kaique'.
+
+```php
+$db->setConditions([
+    "nome" => "Kaique",
+])->delete();
+```
+Já no caso acima, um `\ArrayDB\Exceptions\MissingFieldException` será disparado por não ter o PRIMARY KEY `id` definido nas condições.
+
+### 2.5.2. UNSAFE DELETE
+
+Para desabilitar o SAFE DELETE da exclusão, basta informar o valor `false` no primeiro parâmetro do método `delete`. No caso do último exemplo acima, para não termos nenhum `Exception` disparado bastaria desativar:
+```php
+$db->setConditions([
+    "nome" => "Kaique",
+])->delete(false);
+```
+E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seriam excluídas.
+
+## 3. Pendências do projeto
 
 | S | Descrição |
 | ------ | ----------- |
@@ -263,11 +364,13 @@ Feito isso, os demais métodos para realizar a busca são iguais, apenas lembre-
 | ❌ | Recurso: CREATE (table) |
 | ❌ | Recurso: DROP (table) |
 
-## Recursos disponíveis:
+## 4. Recursos disponíveis:
 
 - SELECT
 - SELECT + JOIN
+- INSERT
+- UPDATE
 - SAVE (INSERT OR UPDATE ON DUPLICATE KEY)
 - DELETE
-- PRIMARY KEY DISCOVERING
+- PRIMARY KEY COLUMN NAME DISCOVER
 - SAFE DELETE
