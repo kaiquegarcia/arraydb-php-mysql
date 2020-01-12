@@ -8,17 +8,17 @@
 Uma abstração para simplificar a ligação entre suas entidades de Orientação a Objeto com seu banco de dados.
 
 #### Sumário
-[1. Instalação](#1-instalao)
+[1. Instalação](#1-instalação)
 <br/>[1.1. Via Composer](#11-via-composer)
 <br/>[1.2. Via download](#12-via-download)
 <br/>[2. Como usar](#2-como-usar)
 <br/>[2.1. Select](#21-select)
-<br/>[2.1.1. Sintaxe de Operações](#211-sintaxe-de-operaes)
+<br/>[2.1.1. Sintaxe de Operações](#211-sintaxe-de-operações)
 <br/>[2.1.2. Operadores](#212-operadores)
 <br/>[2.1.2.1. Operadores de valor](#2121-operadores-de-valor)
-<br/>[2.1.2.2. Operadores de agregação](#2122-operadores-de-agregao)
+<br/>[2.1.2.2. Operadores de agregação](#2122-operadores-de-agregação)
 <br/>[2.1.3. Aplicando operadores](#213-aplicando-operadores)
-<br/>[2.1.4. Ordenação e limitação](#214-ordenao-e-limitao)
+<br/>[2.1.4. Ordenação e limitação](#214-ordenação-e-limitação)
 <br/>[2.1.5. Conjuntos (join)](#215-conjuntos-join)
 <br/>[2.2. Insert](#22-insert)
 <br/>[2.3. Update](#23-update)
@@ -26,8 +26,8 @@ Uma abstração para simplificar a ligação entre suas entidades de Orientaçã
 <br/>[2.5. Delete](#25-delete)
 <br/>[2.5.1. Safe delete (primary key obrigatória nas condições)](#251-safe-delete)
 <br/>[2.5.2. Unsafe delete](#252-unsafe-delete)
-<br/>[3. Pendências do projeto](#3-pendncias-do-projeto)
-<br/>[4. Recursos disponíveis](#4-recursos-disponveis)
+<br/>[3. Pendências do projeto](#3-pendências-do-projeto)
+<br/>[4. Recursos disponíveis](#4-recursos-disponíveis)
 
 ## 1. Instalação
 
@@ -287,7 +287,7 @@ $db->setFields([
     "nome" => "Kaique"
 ])->update();
 ```
-Note que a [sintaxe de operações](#211-sintaxe-de-operaes) de busca também funciona, mas serve somente para as condições, não para os valores alterados.
+Note que a [sintaxe de operações](#211-sintaxe-de-operações) de busca também funciona, mas serve somente para as condições, não para os valores alterados.
 
 ### 2.4. SAVE
 
@@ -316,9 +316,9 @@ O benefício desse método é que a abstração remove a necessidade de enviar t
 
 ### 2.5. DELETE
 
-> Nota: Há em nossa [lista de pendências](#3-pendncias-do-projeto) um item sobre delete com join, porém não é exatamente uma necessidade para o projeto. Entretanto, talvez algumas pessoas precisem e por isso será desenvolvido em algum momento.
+> Nota: Há em nossa [lista de pendências](#3-pendências-do-projeto) um item sobre delete com join, porém não é exatamente uma necessidade para o projeto. Entretanto, talvez algumas pessoas precisem e por isso será desenvolvido em algum momento.
 
-Para excluir um dado é bem simples, basta informar as condições de busca de acorodo com a [sintaxe de operações](#211-sintaxe-de-operaes) e os dados que forem encontrados serão excluídos.
+Para excluir um dado é bem simples, basta informar as condições de busca de acorodo com a [sintaxe de operações](#211-sintaxe-de-operações) e os dados que forem encontrados serão excluídos.
 
 Entretanto, pode ser interessante para alguns projetos excluir somente se houver uma chave primária informada nas condições.
 
