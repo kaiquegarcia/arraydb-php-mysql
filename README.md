@@ -356,11 +356,10 @@ E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seria
 
 | S | Descrição |
 | ------ | ----------- |
-| ✏ | README: finalizar explicações sobre projeto |
-| ✏ | Recurso: DELETE + JOIN |
-| ❌ | Recurso: TRUNCATE |
+| ✏ | Recurso: TRUNCATE |
 | ❌ | Colocar projeto no Packagist.org |
 | ❌ | Preparar guia de instalação via composer |
+| ❌ | Recurso: DELETE + JOIN |
 | ❌ | Recurso: CREATE (table) |
 | ❌ | Recurso: DROP (table) |
 
