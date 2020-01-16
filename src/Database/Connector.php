@@ -5,6 +5,7 @@ namespace ArrayDB\Database;
 use ArrayDB\Drivers\DriverInterface;
 use ArrayDB\Exceptions\DatabaseException;
 use ArrayDB\Exceptions\MissingFieldException;
+use ArrayDB\Exceptions\UnauthorizedDatabaseMethodException;
 use ArrayDB\Exceptions\UnexpectedResultException;
 use ArrayDB\Exceptions\UnexpectedValueException;
 use ArrayDB\Exceptions\WorthlessVariableException;
@@ -88,6 +89,38 @@ class Connector
     protected function getFields(): array
     {
         return $this->fields;
+    }
+
+    private function getPermissions(): array
+    {
+        $grants = $this->connection->query("SHOW GRANTS FOR CURRENT_USER");
+        if(empty($grants)) {
+            return [];
+        }
+        $grants = array_values($grants[0]);
+        $grants = explode(" ON ", str_replace("GRANT ", "", $grants[0]));
+        $grants = explode(",", $grants[0]);
+        $permissions = [];
+        foreach($grants as $permission) {
+            $permissions[] = trim($permission);
+        }
+        return $permissions;
+    }
+
+    /**
+     * @param array $alternatives
+     * @throws UnauthorizedDatabaseMethodException
+     */
+    private function checkPermission(array $alternatives): void
+    {
+        $permissions = $this->getPermissions();
+        foreach($alternatives as $permission) {
+            $permission = strtoupper(trim($permission));
+            if(in_array($permission, $permissions)) {
+                return;
+            }
+        }
+        throw new UnauthorizedDatabaseMethodException();
     }
 
     protected function getDirection(): string
@@ -272,10 +305,12 @@ class Connector
      * @param array $selectors
      * @return array
      * @throws DatabaseException
+     * @throws UnauthorizedDatabaseMethodException
      * @throws UnexpectedValueException
      */
     public function select(array $selectors = []): array
     {
+        $this->checkPermission(["SELECT"]);
         $conditions = $this->getConditions();
         $orderBy = ArrayHelper::getUnset($conditions, "orderBy");
         $limit = ArrayHelper::getUnset($conditions, "limit");
@@ -344,11 +379,13 @@ class Connector
     /**
      * @return bool
      * @throws DatabaseException
+     * @throws UnauthorizedDatabaseMethodException
      * @throws UnexpectedValueException
      * @throws WorthlessVariableException
      */
     public function save(): bool
     {
+        $this->checkPermission(["INSERT", "UPDATE"]);
         $this->checkFields();
         $args = $this->getFieldValues();
         $query = "INSERT INTO `{$this->table}` ({$this->getFieldColumns()}) VALUES ({$this->getInsertStatement($args)})
@@ -362,12 +399,14 @@ class Connector
     /**
      * @return bool
      * @throws DatabaseException
+     * @throws UnauthorizedDatabaseMethodException
      * @throws UnexpectedValueException
      * @throws WorthlessVariableException
      */
     public function insert(): bool
     {
         // todo: insert + select
+        $this->checkPermission(["INSERT"]);
         $this->checkFields();
         $args = $this->getFieldValues();
         $query = "INSERT INTO `{$this->table}` ({$this->getFieldColumns()}) VALUES ({$this->getInsertStatement($args)})";
@@ -379,12 +418,14 @@ class Connector
     /**
      * @return bool
      * @throws DatabaseException
+     * @throws UnauthorizedDatabaseMethodException
      * @throws UnexpectedValueException
      * @throws WorthlessVariableException
      */
     public function update(): bool
     {
         // todo: update + join
+        $this->checkPermission(["UPDATE"]);
         $this->checkFields();
         $this->checkConditions();
         $conditions = $this->getConditions();
@@ -414,6 +455,7 @@ class Connector
      * @return bool
      * @throws DatabaseException
      * @throws MissingFieldException
+     * @throws UnauthorizedDatabaseMethodException
      * @throws UnexpectedResultException
      * @throws UnexpectedValueException
      * @throws WorthlessVariableException
@@ -421,6 +463,7 @@ class Connector
     public function delete($safeDelete = true): bool
     {
         // todo: delete with join (selecting which tables to delete)
+        $this->checkPermission(["DELETE"]);
         $this->checkConditions();
         if($safeDelete) {
             $primaryKeyColumn = $this->getPrimaryKeyColumn();
@@ -439,11 +482,25 @@ class Connector
     /**
      * @return bool
      * @throws DatabaseException
+     * @throws UnauthorizedDatabaseMethodException
      */
     public function truncate(): bool
     {
         // todo: truncate multiple tables
+        $this->checkPermission(["DELETE"]);
         $query = "TRUNCATE `{$this->connection->getSchema()}`.`{$this->getTable()}`";
+        return $this->connection->query($query);
+    }
+
+    /**
+     * @return bool
+     * @throws DatabaseException
+     * @throws UnauthorizedDatabaseMethodException
+     */
+    public function createTable(): bool
+    {
+        $this->checkPermission(["CREATE"]);
+        $query = "CREATE DATABASE IF NOT EXISTS `{$this->getTable()}`";
         return $this->connection->query($query);
     }
 

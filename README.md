@@ -356,8 +356,7 @@ E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seria
 
 | S | Descrição |
 | ------ | ----------- |
-| ❌ | Recurso: CREATE (table) |
-| ❌ | Recurso: JOIN de diferentes SCHEMAS |
+| ✏ | Recurso: JOIN de diferentes SCHEMAS |
 | ❌ | Recurso: INSERT + SELECT |
 | ❌ | Recurso: UPDATE + JOIN |
 | ❌ | Colocar projeto no Packagist.org |
@@ -377,3 +376,4 @@ E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seria
 - PRIMARY KEY COLUMN NAME DISCOVER
 - SAFE DELETE
 - TRUNCATE
+- CREATE DATABASE
