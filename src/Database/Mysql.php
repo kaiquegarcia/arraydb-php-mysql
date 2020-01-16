@@ -19,7 +19,7 @@ class Mysql
      */
     private function checkDatabaseError(): void
     {
-        if($this->con->errno) {
+        if ($this->con->errno) {
             throw new DatabaseException($this->con->error);
         }
     }
@@ -32,6 +32,11 @@ class Mysql
     public function getSchema(): ?string
     {
         return $this->schema;
+    }
+
+    public function useSchema(string $schema): void
+    {
+        $this->con->select_db($schema);
     }
 
     /**
@@ -59,7 +64,7 @@ class Mysql
      */
     public function query(string $query, array $fields = [])
     {
-        if(!$this->con instanceof mysqli) {
+        if (!$this->con instanceof mysqli) {
             throw new DatabaseException("You must connect first");
         }
         if (empty($fields)) {
@@ -78,10 +83,10 @@ class Mysql
         $execute = $this->con->query($query);
         $this->checkDatabaseError();
         return $execute instanceof mysqli_result
-            && $execute->field_count
-            && $execute->num_rows
-                ? (array)$execute->fetch_all(MYSQLI_ASSOC)
-                : $execute === true;
+        && $execute->field_count
+        && $execute->num_rows
+            ? (array)$execute->fetch_all(MYSQLI_ASSOC)
+            : $execute === true;
     }
 
     /**
@@ -113,18 +118,18 @@ class Mysql
     {
         $statement = $this->con->prepare($query);
         $this->checkDatabaseError();
-        if(!$statement instanceof mysqli_stmt) {
+        if (!$statement instanceof mysqli_stmt) {
             throw new DatabaseException("Couldn't prepare this query");
         }
         $types = $this->getTypesFromFields($fields);
         $statement->bind_param($types, ...$fields);
         $executed = $statement->execute();
         $this->checkDatabaseError();
-        if(!$executed) {
+        if (!$executed) {
             throw new DatabaseException("Couldn't execute this query");
         }
         $result = $statement->get_result();
-        if($result instanceof mysqli_result && $result->field_count) {
+        if ($result instanceof mysqli_result && $result->field_count) {
             return $result->num_rows ? (array)$result->fetch_all(MYSQLI_ASSOC) : [];
         }
         return $this->con->affected_rows > 0;

@@ -357,6 +357,7 @@ E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seria
 | S | Descrição |
 | ------ | ----------- |
 | ✏ | Recurso: JOIN de diferentes SCHEMAS |
+| ❌ | Recurso: CREATE TABLE |
 | ❌ | Recurso: INSERT + SELECT |
 | ❌ | Recurso: UPDATE + JOIN |
 | ❌ | Colocar projeto no Packagist.org |

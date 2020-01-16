@@ -94,14 +94,14 @@ class Connector
     private function getPermissions(): array
     {
         $grants = $this->connection->query("SHOW GRANTS FOR CURRENT_USER");
-        if(empty($grants)) {
+        if (empty($grants)) {
             return [];
         }
         $grants = array_values($grants[0]);
         $grants = explode(" ON ", str_replace("GRANT ", "", $grants[0]));
         $grants = explode(",", $grants[0]);
         $permissions = [];
-        foreach($grants as $permission) {
+        foreach ($grants as $permission) {
             $permissions[] = trim($permission);
         }
         return $permissions;
@@ -114,9 +114,9 @@ class Connector
     private function checkPermission(array $alternatives): void
     {
         $permissions = $this->getPermissions();
-        foreach($alternatives as $permission) {
+        foreach ($alternatives as $permission) {
             $permission = strtoupper(trim($permission));
-            if(in_array($permission, $permissions)) {
+            if (in_array($permission, $permissions)) {
                 return;
             }
         }
@@ -444,7 +444,7 @@ class Connector
             "SHOW KEYS FROM `{$this->table}` WHERE Key_name='PRIMARY'"
         );
         $args = $this->getFieldValues();
-        if(empty($result)) {
+        if (empty($result)) {
             throw new UnexpectedResultException("Couldn't discover the primary key column name from table '{$this->table}'");
         }
         return $result[0]["Column_name"];
@@ -465,9 +465,9 @@ class Connector
         // todo: delete with join (selecting which tables to delete)
         $this->checkPermission(["DELETE"]);
         $this->checkConditions();
-        if($safeDelete) {
+        if ($safeDelete) {
             $primaryKeyColumn = $this->getPrimaryKeyColumn();
-            if(!isset($this->conditions[$primaryKeyColumn])) {
+            if (!isset($this->conditions[$primaryKeyColumn])) {
                 throw new MissingFieldException("Missing required field '$primaryKeyColumn' (or disable safe delete)");
             }
         }
@@ -493,15 +493,20 @@ class Connector
     }
 
     /**
+     * @param string $schema
      * @return bool
      * @throws DatabaseException
      * @throws UnauthorizedDatabaseMethodException
      */
-    public function createSchema(): bool
+    public function createSchema(string $schema): bool
     {
         $this->checkPermission(["CREATE"]);
-        $query = "CREATE DATABASE IF NOT EXISTS `{$this->getTable()}`";
-        return $this->connection->query($query);
+        $query = "CREATE DATABASE IF NOT EXISTS `$schema`";
+        $created = $this->connection->query($query);
+        if ($created) {
+            $this->connection->useSchema($schema);
+        }
+        return $created;
     }
 
     /**
