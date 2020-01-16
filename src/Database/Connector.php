@@ -497,7 +497,7 @@ class Connector
      * @throws DatabaseException
      * @throws UnauthorizedDatabaseMethodException
      */
-    public function createTable(): bool
+    public function createSchema(): bool
     {
         $this->checkPermission(["CREATE"]);
         $query = "CREATE DATABASE IF NOT EXISTS `{$this->getTable()}`";

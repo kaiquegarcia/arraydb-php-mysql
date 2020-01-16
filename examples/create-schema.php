@@ -5,7 +5,7 @@ include_once "config.php";
 
 $db = new \ArrayDB\Database\Connector("new_table_test__" . floor(rand(0,999)));
 
-$create = $db->createTable() ? "Y" : "N";
+$create = $db->createSchema() ? "Y" : "N";
 
 echo "<b>Created</b>: $create";
 echo "<br/><b>Table name</b>: {$db->getTable()}";
