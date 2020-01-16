@@ -11,6 +11,7 @@ class Mysql
 {
     /** @var mysqli $con */
     private $con = false;
+    private $schema;
     private $connected;
 
     /**
@@ -28,6 +29,11 @@ class Mysql
         return $this->connected;
     }
 
+    public function getSchema(): ?string
+    {
+        return $this->schema;
+    }
+
     /**
      * @param string $host
      * @param string $username
@@ -41,6 +47,7 @@ class Mysql
         $this->con = new mysqli($host, $username, $password, $dbname);
         $this->checkDatabaseError();
         $this->con->set_charset($charset);
+        $this->schema = $dbname;
         $this->connected = true;
     }
 
