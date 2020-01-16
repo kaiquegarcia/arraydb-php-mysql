@@ -158,6 +158,7 @@ class Connector
      */
     public function join(array $settings): self
     {
+        // todo: join.schema != self.schema
         if (empty($settings)) {
             throw new UnexpectedValueException();
         }
@@ -259,7 +260,9 @@ class Connector
         $result = $append = "";
         $escape = $escape ? "`" : "";
         foreach ($selectors as $selector) {
-            $result .= "{$append}{$escape}{$selector}{$escape}";
+            $mustEscape = strpos($selector, "(") === false && strpos($selector, "`") === false;
+            $selectorEscape = $mustEscape ? $escape : "";
+            $result .= "{$append}{$selectorEscape}{$selector}{$selectorEscape}";
             $append = ", ";
         }
         return $result;
@@ -364,6 +367,7 @@ class Connector
      */
     public function insert(): bool
     {
+        // todo: insert + select
         $this->checkFields();
         $args = $this->getFieldValues();
         $query = "INSERT INTO `{$this->table}` ({$this->getFieldColumns()}) VALUES ({$this->getInsertStatement($args)})";
@@ -380,6 +384,7 @@ class Connector
      */
     public function update(): bool
     {
+        // todo: update + join
         $this->checkFields();
         $this->checkConditions();
         $conditions = $this->getConditions();
@@ -429,6 +434,17 @@ class Connector
         $result = $this->connection->query($query, $args);
         $this->conditions = [];
         return $result;
+    }
+
+    /**
+     * @return bool
+     * @throws DatabaseException
+     */
+    public function truncate(): bool
+    {
+        // todo: truncate multiple tables
+        $query = "TRUNCATE `{$this->connection->getSchema()}`.`{$this->getTable()}`";
+        return $this->connection->query($query);
     }
 
     /**

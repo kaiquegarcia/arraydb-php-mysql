@@ -356,11 +356,14 @@ E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seria
 
 | S | Descrição |
 | ------ | ----------- |
-| ✏ | Recurso: TRUNCATE |
+| ❌ | Recurso: CREATE (table) |
+| ❌ | Recurso: JOIN de diferentes SCHEMAS |
+| ❌ | Recurso: INSERT + SELECT |
+| ❌ | Recurso: UPDATE + JOIN |
 | ❌ | Colocar projeto no Packagist.org |
 | ❌ | Preparar guia de instalação via composer |
 | ❌ | Recurso: DELETE + JOIN |
-| ❌ | Recurso: CREATE (table) |
+| ❌ | Recurso: TRUNCATE MULTIPLE TABLES |
 | ❌ | Recurso: DROP (table) |
 
 ## 4. Recursos disponíveis:
@@ -373,3 +376,4 @@ E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seria
 - DELETE
 - PRIMARY KEY COLUMN NAME DISCOVER
 - SAFE DELETE
+- TRUNCATE
