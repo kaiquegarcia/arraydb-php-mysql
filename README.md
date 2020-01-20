@@ -75,7 +75,13 @@ $defaultConnection = new \ArrayDB\Database\Connector("table_name");
 
 $diffConnection = new \ArrayDB\Database\Connector(
     "table_name",
-    new \ArrayDB\Database\Mysql("host", "username", "password", "schema", "charset")
+    (new \ArrayDB\Database\Mysql())->connect([
+        "host" => "localhost",
+        "username" => "root",
+        "password" => "",
+        "schema" => "nomeDoSchema",
+        "charset" => "utf-8", //opcional
+    ])
 );
 ```
 

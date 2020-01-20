@@ -35,6 +35,13 @@ const joinSettings = [
         "`anotherAlias`.`another_table_id`" => "`myAlias`.`foreign_key_to_another_table_id`",
         ":`anotherAlias`.something" => ["some", "value", "(s)"],
     ],
+    "connection" => [ //optional
+        "host" => "localhost",
+        "username" => "root",
+        "password" => "",
+        "schema" => "",
+        "charset" => null,
+    ]
 ];
 
 // in joined selections, you should inform any alias on array indexes
