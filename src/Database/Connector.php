@@ -4,6 +4,7 @@ namespace ArrayDB\Database;
 
 use ArrayDB\Drivers\DriverInterface;
 use ArrayDB\Exceptions\DatabaseException;
+use ArrayDB\Exceptions\InvalidJoinConnectionException;
 use ArrayDB\Exceptions\MissingFieldException;
 use ArrayDB\Exceptions\UnauthorizedDatabaseMethodException;
 use ArrayDB\Exceptions\UnexpectedResultException;
@@ -42,6 +43,7 @@ class Connector
      * @param Mysql|null $connection
      * @throws DatabaseException
      * @throws UnexpectedValueException
+     * @throws WrongTypeException
      */
     public function __construct(string $table, ?Mysql $connection = null)
     {
@@ -58,6 +60,8 @@ class Connector
 
     /**
      * @throws DatabaseException
+     * @throws UnexpectedValueException
+     * @throws WrongTypeException
      */
     private function setDefaultConnection(): void
     {
@@ -65,10 +69,14 @@ class Connector
             $this->connection = static::$defaultConnection;
             return;
         }
-        $config = array_values(Settings::$CONNECTION_CONFIG);
         $this->connection = new Mysql();
-        $this->connection->connect(...$config);
+        $this->connection->connect(Settings::$CONNECTION_CONFIG);
         static::$defaultConnection = $this->connection;
+    }
+
+    public function getSchema(): ?string
+    {
+        return $this->connection->getSchema();
     }
 
     public function getTable(): string
@@ -91,6 +99,10 @@ class Connector
         return $this->fields;
     }
 
+    /**
+     * @return array
+     * @throws DatabaseException
+     */
     private function getPermissions(): array
     {
         $grants = $this->connection->query("SHOW GRANTS FOR CURRENT_USER");
@@ -109,6 +121,7 @@ class Connector
 
     /**
      * @param array $alternatives
+     * @throws DatabaseException
      * @throws UnauthorizedDatabaseMethodException
      */
     private function checkPermission(array $alternatives): void
@@ -183,19 +196,41 @@ class Connector
 
     /**
      * @param array $settings
+     * @return Mysql
+     * @throws DatabaseException
+     * @throws InvalidJoinConnectionException
+     * @throws UnexpectedValueException
+     * @throws WrongTypeException
+     */
+    private function prepareJoinConnection(array $settings): Mysql
+    {
+        if (!isset($settings['connection']) || !is_array($settings['connection'])) {
+            return $this->connection;
+        } elseif (!isset($settings['connection']['host']) || $settings['connection']['host'] !== $this->connection->getHost()) {
+            throw new InvalidJoinConnectionException(
+                "Joined table's connection must be from {$this->connection->getHost()}. '{$settings['connection']['host']}' received."
+            );
+        }
+        $mysql = new Mysql();
+        $mysql->connect($settings['connection']);
+        return $mysql;
+    }
+
+    /**
+     * @param array $settings
      * @return $this
      * @throws DatabaseException
+     * @throws InvalidJoinConnectionException
      * @throws MissingFieldException
      * @throws UnexpectedValueException
      * @throws WrongTypeException
      */
     public function join(array $settings): self
     {
-        // todo: join.schema != self.schema
         if (empty($settings)) {
-            throw new UnexpectedValueException();
+            throw new UnexpectedValueException("Join settings can't be empty.");
         }
-        $settings['connection'] = $this->connection;
+        $settings['connection'] = $this->prepareJoinConnection($settings);
         $this->joinContexts[] = self::toJoin($settings);
         return $this;
     }
@@ -280,7 +315,7 @@ class Connector
                     break;
             }
             $conditions = $this->prepareConditionsQuery($context->getConditions(), " AND ", false, "");
-            $joinQuery .= " JOIN `{$context->getTable()}` AS `{$context->getAlias()}` ON {$conditions['query']}";
+            $joinQuery .= " JOIN `{$context->getSchema()}`.`{$context->getTable()}` AS `{$context->getAlias()}` ON {$conditions['query']}";
         }
         return $joinQuery;
     }
@@ -315,7 +350,7 @@ class Connector
         $orderBy = ArrayHelper::getUnset($conditions, "orderBy");
         $limit = ArrayHelper::getUnset($conditions, "limit");
         $joins = $this->getJoinQuery();
-        $aliasDot = $aliasAs = "";
+        $schemaDot = $aliasDot = $aliasAs = "";
         if ($joins) {
             $alias = $this->getAlias();
             if (!$alias) {
@@ -324,6 +359,7 @@ class Connector
             $alias = "`$alias`";
             $aliasDot = "$alias.";
             $aliasAs = " AS $alias";
+            $schemaDot = "`{$this->getSchema()}`.";
         }
         $query = $this->prepareConditionsQuery($conditions, " AND ", true);
         $where = $query['query'];
@@ -331,7 +367,7 @@ class Connector
         $syntax = "SELECT {selectors} FROM {table} {joins} {conditions} {orderBy} {limit}";
         $query = StringHelper::multiReplace($syntax, [
             "selectors" => $this->prepareSelectors($selectors, $aliasDot, $joins === ""),
-            "table" => "`{$this->table}`{$aliasAs}",
+            "table" => "{$schemaDot}`{$this->table}`{$aliasAs}",
             "joins" => $joins,
             "conditions" => $where ? " WHERE $where" : "",
             "orderBy" => $orderBy ? " ORDER BY $orderBy" : "",
@@ -438,7 +474,13 @@ class Connector
 
     }
 
-    private function getPrimaryKeyColumn(): string
+    /**
+     * @return string
+     * @throws DatabaseException
+     * @throws UnexpectedResultException
+     * @throws UnexpectedValueException
+     */
+    public function getPrimaryKeyColumn(): string
     {
         $result = $this->connection->query(
             "SHOW KEYS FROM `{$this->table}` WHERE Key_name='PRIMARY'"
@@ -586,7 +628,7 @@ class Connector
         string $alias,
         array $conditions,
         string $direction = self::JOIN,
-        ?Mysql $connection = null
+        ?array $connection = null
     ): array
     {
         return [

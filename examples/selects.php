@@ -10,8 +10,6 @@ $db->setAlias(alias);
 
 $result1 = $db->setConditions(simpleSelectConditions)->select();
 
-$db->setAlias(alias);
-
 $result2 = $db
     ->join(joinSettings) // you can call this anytimes you want to append join settings
     ->setConditions(joinSelectConditions)
