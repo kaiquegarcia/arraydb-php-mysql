@@ -11,6 +11,7 @@ class Mysql
 {
     /** @var mysqli $con */
     private $con = false;
+    private $host;
     private $schema;
     private $connected;
 
@@ -34,25 +35,42 @@ class Mysql
         return $this->schema;
     }
 
+    public function getHost(): ?string
+    {
+        return $this->host;
+    }
+
+    private function setHost(string $host): void
+    {
+        $this->host = $host;
+    }
+
+    private function setSchema(string $schema): void
+    {
+        $this->schema = $schema;
+    }
+
     public function useSchema(string $schema): void
     {
         $this->con->select_db($schema);
+        $this->setSchema($schema);
     }
 
     /**
      * @param string $host
      * @param string $username
      * @param string $password
-     * @param string $dbname
+     * @param string $schema
      * @param string $charset
      * @throws DatabaseException
      */
-    public function connect(string $host, string $username, string $password, string $dbname, string $charset = "utf-8"): void
+    public function connect(string $host, string $username, string $password, string $schema, string $charset = "utf-8"): void
     {
-        $this->con = new mysqli($host, $username, $password, $dbname);
+        $this->con = new mysqli($host, $username, $password, $schema);
         $this->checkDatabaseError();
         $this->con->set_charset($charset);
-        $this->schema = $dbname;
+        $this->setHost($host);
+        $this->setSchema($schema);
         $this->connected = true;
     }
 
