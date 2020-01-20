@@ -3,6 +3,9 @@
 namespace ArrayDB\Database;
 
 use ArrayDB\Exceptions\DatabaseException;
+use ArrayDB\Exceptions\UnexpectedValueException;
+use ArrayDB\Exceptions\WrongTypeException;
+use ArrayDB\Utils\ArrayHelper;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -57,21 +60,23 @@ class Mysql
     }
 
     /**
-     * @param string $host
-     * @param string $username
-     * @param string $password
-     * @param string $schema
-     * @param string $charset
+     * @param array $settings
+     * @return Mysql
      * @throws DatabaseException
+     * @throws UnexpectedValueException
+     * @throws WrongTypeException
      */
-    public function connect(string $host, string $username, string $password, string $schema, string $charset = "utf-8"): void
+    public function connect(array $settings): self
     {
-        $this->con = new mysqli($host, $username, $password, $schema);
+        $settings = self::prepareConnectionInput($settings);
+        $charset = ArrayHelper::getUnset($settings, "charset") ?? "utf-8";
+        $this->con = new mysqli(...array_values($settings));
         $this->checkDatabaseError();
         $this->con->set_charset($charset);
-        $this->setHost($host);
-        $this->setSchema($schema);
+        $this->setHost($settings['host']);
+        $this->setSchema($settings['schema']);
         $this->connected = true;
+        return $this;
     }
 
     /**
@@ -159,5 +164,47 @@ class Mysql
             return $this->con->insert_id;
         }
         return null;
+    }
+
+    /**
+     * @param array $settings
+     * @throws UnexpectedValueException
+     * @throws WrongTypeException
+     */
+    private static function validateConnectionInputs(array $settings): void
+    {
+        if(!isset($settings['host']) || !is_string($settings['host'])) {
+            throw new UnexpectedValueException("You must inform a host to connect.");
+        } elseif(!isset($settings['username']) || !is_string($settings['username'])) {
+            throw new UnexpectedValueException("You must inform an username.");
+        } elseif(!isset($settings['password']) || !is_string($settings['password'])) {
+            throw new UnexpectedValueException("You must inform a password.");
+        } elseif(isset($settings['schema']) && !is_string($settings['schema'])) {
+            throw new WrongTypeException("schema should be string.");
+        } elseif(isset($settings['charset']) && !is_string($settings['charset'])) {
+            throw new WrongTypeException("charset should be string.");
+        }
+    }
+
+    /**
+     * @param array $settings
+     * @return array
+     * @throws UnexpectedValueException
+     * @throws WrongTypeException
+     */
+    public static function prepareConnectionInput(array $settings): array
+    {
+        self::validateConnectionInputs($settings);
+        $charset = ArrayHelper::getUnset($settings, "charset");
+        if(!$charset) {
+            $charset = "utf8";
+        }
+        return [
+            "host" => ArrayHelper::getUnset($settings, "host"),
+            "username" => ArrayHelper::getUnset($settings, "username"),
+            "password" => ArrayHelper::getUnset($settings, "password"),
+            "schema" => ArrayHelper::getUnset($settings, "schema"),
+            "charset" => $charset
+        ];
     }
 }
