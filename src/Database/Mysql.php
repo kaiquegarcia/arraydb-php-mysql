@@ -148,7 +148,7 @@ class Mysql
         return null;
     }
 
-    private function getResultWithoutMysqlDriver(mysqli_stmt $statement)
+    private function bindResultFields(mysqli_stmt $statement): ?array
     {
         $fields = $anchors = [];
         $metaData = $statement->result_metadata();
@@ -167,10 +167,26 @@ class Mysql
         $statement->bind_result(...$anchors);
         $statement->store_result();
 
-        $rows = [];
+        return $fields;
+    }
 
-        while ($statement->fetch()) {
-            $rows[] = $fields;
+    private function fetchAssoc(mysqli_stmt $statement, array &$fields): ?array
+    {
+        if ($statement->fetch()) {
+            return $fields;
+        }
+        return null;
+    }
+
+    private function getResultWithoutMysqlDriver(mysqli_stmt $statement)
+    {
+        $fields = $this->bindResultFields($statement);
+        if ($fields === null) {
+            return null;
+        }
+        $rows = [];
+        while ($row = $this->fetchAssoc($statement, $fields)) {
+            $rows[] = $row;
         }
         return $rows;
     }
