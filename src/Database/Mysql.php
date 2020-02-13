@@ -152,6 +152,9 @@ class Mysql
     {
         $fields = $anchors = [];
         $metaData = $statement->result_metadata();
+        if (!$metaData) {
+            return null;
+        }
         while ($field = $metaData->fetch_field()) {
             $fields[$field->name] = "";
             $anchors[] = &$fields[$field->name];
