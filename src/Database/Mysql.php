@@ -139,6 +139,39 @@ class Mysql
         return $types;
     }
 
+    private function getResultWithMysqlDriver(mysqli_stmt $statement)
+    {
+        $result = $statement->get_result();
+        if ($result instanceof mysqli_result && $result->field_count) {
+            return (array)$result->fetch_all(MYSQLI_ASSOC);
+        }
+        return null;
+    }
+
+    private function getResultWithoutMysqlDriver(mysqli_stmt $statement)
+    {
+        $fields = $anchors = [];
+        $metaData = $statement->result_metadata();
+        while ($field = $metaData->fetch_field()) {
+            $fields[$field->name] = "";
+            $anchors[] = &$fields[$field->name];
+        }
+
+        if (empty($fields)) {
+            return null;
+        }
+
+        $statement->bind_result(...$anchors);
+        $statement->store_result();
+
+        $rows = [];
+
+        while ($statement->fetch()) {
+            $rows[] = $fields;
+        }
+        return $rows;
+    }
+
     /**
      * @param string $query
      * @param array $fields
@@ -159,16 +192,13 @@ class Mysql
         if (!$executed) {
             throw new DatabaseException("Couldn't execute this query");
         }
-        $result = $statement->get_result();
-        if ($result instanceof mysqli_result && $result->field_count) {
-            if (method_exists($result, "fetch_all")) {
-                return (array)$result->fetch_all(MYSQLI_ASSOC);
-            }
-            $rows = [];
-            while ($row = $result->fetch_assoc()) {
-                $rows[] = $row;
-            }
-            return $rows;
+        if (method_exists($statement, "get_result")) {
+            $result = $this->getResultWithMysqlDriver($statement);
+        } else {
+            $result = $this->getResultWithoutMysqlDriver($statement);
+        }
+        if ($result !== null) {
+            return $result;
         }
         return $this->con->affected_rows > 0;
     }
