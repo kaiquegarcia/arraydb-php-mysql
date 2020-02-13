@@ -14,6 +14,15 @@ class ArrayHelper
         return $value;
     }
 
+    public static function getClone(array $arr): array
+    {
+        $clone = [];
+        foreach($arr as $key => $value) {
+            $clone[$key] = $value;
+        }
+        return $clone;
+    }
+
     public static function isStringIndexed(array $arr): bool
     {
         return count(array_filter(array_keys($arr), "is_string")) === count($arr);

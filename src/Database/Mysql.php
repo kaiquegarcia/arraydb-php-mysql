@@ -186,7 +186,7 @@ class Mysql
         }
         $rows = [];
         while ($row = $this->fetchAssoc($statement, $fields)) {
-            $rows[] = $row;
+            $rows[] = ArrayHelper::getClone($row);
         }
         return $rows;
     }
