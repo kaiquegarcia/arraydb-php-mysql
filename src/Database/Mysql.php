@@ -105,11 +105,19 @@ class Mysql
     {
         $execute = $this->con->query($query);
         $this->checkDatabaseError();
-        return $execute instanceof mysqli_result
-        && $execute->field_count
-        && $execute->num_rows
-            ? (array)$execute->fetch_all(MYSQLI_ASSOC)
-            : $execute === true;
+        if (
+            $execute instanceof mysqli_result
+        ) {
+            if (method_exists($execute, "fetch_all")) {
+                return (array)$execute->fetch_all(MYSQLI_ASSOC);
+            }
+            $rows = [];
+            while ($row = $execute->fetch_assoc()) {
+                $rows[] = $row;
+            }
+            return $rows;
+        }
+        return $execute === true;
     }
 
     /**
@@ -153,7 +161,14 @@ class Mysql
         }
         $result = $statement->get_result();
         if ($result instanceof mysqli_result && $result->field_count) {
-            return $result->num_rows ? (array)$result->fetch_all(MYSQLI_ASSOC) : [];
+            if (method_exists($result, "fetch_all")) {
+                return (array)$result->fetch_all(MYSQLI_ASSOC);
+            }
+            $rows = [];
+            while ($row = $result->fetch_assoc()) {
+                $rows[] = $row;
+            }
+            return $rows;
         }
         return $this->con->affected_rows > 0;
     }
@@ -173,15 +188,15 @@ class Mysql
      */
     private static function validateConnectionInputs(array $settings): void
     {
-        if(!isset($settings['host']) || !is_string($settings['host'])) {
+        if (!isset($settings['host']) || !is_string($settings['host'])) {
             throw new UnexpectedValueException("You must inform a host to connect.");
-        } elseif(!isset($settings['username']) || !is_string($settings['username'])) {
+        } elseif (!isset($settings['username']) || !is_string($settings['username'])) {
             throw new UnexpectedValueException("You must inform an username.");
-        } elseif(!isset($settings['password']) || !is_string($settings['password'])) {
+        } elseif (!isset($settings['password']) || !is_string($settings['password'])) {
             throw new UnexpectedValueException("You must inform a password.");
-        } elseif(isset($settings['schema']) && !is_string($settings['schema'])) {
+        } elseif (isset($settings['schema']) && !is_string($settings['schema'])) {
             throw new WrongTypeException("schema should be string.");
-        } elseif(isset($settings['charset']) && !is_string($settings['charset'])) {
+        } elseif (isset($settings['charset']) && !is_string($settings['charset'])) {
             throw new WrongTypeException("charset should be string.");
         }
     }
@@ -196,7 +211,7 @@ class Mysql
     {
         self::validateConnectionInputs($settings);
         $charset = ArrayHelper::getUnset($settings, "charset");
-        if(!$charset) {
+        if (!$charset) {
             $charset = "utf8";
         }
         return [
@@ -204,7 +219,7 @@ class Mysql
             "username" => ArrayHelper::getUnset($settings, "username"),
             "password" => ArrayHelper::getUnset($settings, "password"),
             "schema" => ArrayHelper::getUnset($settings, "schema"),
-            "charset" => $charset
+            "charset" => $charset,
         ];
     }
 }
