@@ -99,6 +99,19 @@ class Connector
         return $this->fields;
     }
 
+    private function extractPrivileges(string $grant): array
+    {
+        $grants = explode(" ON ", str_replace("GRANT ", "", $grant));
+        $grants = explode(",", $grants[0]);
+        $list = [];
+        foreach ($grants as $privilege) {
+            if ($privilege !== "") {
+                $list[] = trim($privilege);
+            }
+        }
+        return $list;
+    }
+
     /**
      * @return array
      * @throws DatabaseException
@@ -109,14 +122,13 @@ class Connector
         if (empty($grants)) {
             return [];
         }
-        $grants = array_values($grants[0]);
-        $grants = explode(" ON ", str_replace("GRANT ", "", $grants[0]));
-        $grants = explode(",", $grants[0]);
         $permissions = [];
-        foreach ($grants as $permission) {
-            $permissions[] = trim($permission);
+        foreach($grants as $grantQuery) {
+            $grantQuery = array_values($grantQuery);
+            $privileges = $this->extractPrivileges($grantQuery[0]);
+            $permissions = array_merge($permissions, $privileges);
         }
-        return $permissions;
+        return array_unique($permissions);
     }
 
     /**
@@ -127,6 +139,9 @@ class Connector
     private function checkPermission(array $alternatives): void
     {
         $permissions = $this->getPermissions();
+        if (in_array("ALL PRIVILEGES", $permissions)) {
+            return;
+        }
         foreach ($alternatives as $permission) {
             $permission = strtoupper(trim($permission));
             if (in_array($permission, $permissions)) {
