@@ -26,8 +26,11 @@ Uma abstração para simplificar a ligação entre suas entidades de Orientaçã
 <br/>[2.5. Delete](#25-delete)
 <br/>[2.5.1. Safe delete (primary key obrigatória nas condições)](#251-safe-delete)
 <br/>[2.5.2. Unsafe delete](#252-unsafe-delete)
-<br/>[3. Pendências do projeto](#3-pendências-do-projeto)
-<br/>[4. Recursos disponíveis](#4-recursos-disponíveis)
+<br/>[3. Transaction](#3-transaction)
+<br/>[3.1. Closure Transaction](#31-closure-transaction)
+<br/>[3.2. Manual Transaction](#32-manual-transaction)
+<br/>[4. Pendências do projeto](#4-pendências-do-projeto)
+<br/>[5. Recursos disponíveis](#5-recursos-disponíveis)
 
 ## 1. Instalação
 
@@ -46,6 +49,7 @@ O projeto será incluído no Packagist.org em breve para disponibilizar a instal
   }
 }
 ```
+> NOTA: Você deve manter em mente que a sintaxe ainda está sendo desenvolvida e mudanças podem ocorrer ao longo do projeto. Por tanto, se instalar esse repositório via Composer, lembre de especificar a versão que irá utilizar corretamente (seja pela identificação do commit ou pelos futuros releases).
 
 ### 1.2. Via download
 Após baixar o repositório manualmente, lembre de incluir na execução principal do PHP o **registro de autoload** do projeto:
@@ -88,7 +92,6 @@ $diffConnection = new \ArrayDB\Database\Connector(
 Ou seja, você não está preso à configuração padrão.
 
 As implementações seguintes foram desenvolvidas para que possa se comunicar usando apenas array's.
-> NOTA: Você deve manter em mente que a sintaxe ainda está sendo desenvolvida e mudanças podem ocorrer ao longo do projeto. Por tanto, se instalar esse repositório via Composer, lembre de especificar a versão que irá utilizar corretamente (seja pela identificação do commit ou pelos futuros releases).
 
 ### 2.1. SELECT
 
@@ -358,7 +361,55 @@ $db->setConditions([
 ```
 E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seriam excluídas.
 
-## 3. Pendências do projeto
+## 3. TRANSACTION
+
+Você tem duas formas de executar transações:
+
+### 3.1. CLOSURE TRANSACTION
+
+[Closure](https://www.php.net/manual/pt_BR/class.closure.php) são funções anônimas criadas sob demanda. Nesse caso, fazer transações com Closure é uma forma simples de dizer ao banco "execute tudo isso junto, se algo der errado, desfaça tudo" de forma automatizada.
+A forma de fazer isso é bem simples:
+
+```php
+$db->transact(function() use ($db) {
+    $db->setFields(["nome" => "Kaique", "sobrenome" => "Garcia"])->insert();
+    $db->setFields(["nome" => "Kaique", "sobrenome" => "Sanchez"])->insert();
+    $db->setFields(["nome" => "Kaique", "sobrenome" => "Menezes"])->insert();
+});
+```
+
+No código acima, se algum dos inserts disparar uma exceção (ou qualquer parte do código no mesmo escopo), todos os inserts serão descartados. Caso contrário, tudo irá passar normalmente.
+Se você precisar disparar algo pro banco no meio do Closure, basta chamar a ação de `commit`.
+
+```php
+$db->transact(function() use ($db) {
+    $db->setFields(["nome" => "Kaique", "sobrenome" => "Garcia"])->insert();
+    $db->commit(); // envia o primeiro insert pro banco
+    $lastId = $db->getLastInsertedId();
+    $db->setFields(["nome" => "Kaique", "sobrenome" => "Sanchez", "parente" => $lastId])->insert();
+});
+```
+
+No caso acima, usei o ID gerado do primeiro insert no segundo.
+
+### 3.2. MANUAL TRANSACTION
+
+Ainda assim, closures se tornam difíceis de gerenciar quando há muitos parâmetros para jogar dentro. Nesse caso, você pode usar os métodos de transação em seu próprio try-catch:
+
+```php
+try {
+    $db->beginTransaction();
+    $db->setFields(["nome" => "Kaique", "sobrenome" => "Garcia"])->insert();
+    $db->setFields(["nome" => "Kaique", "sobrenome" => "Sanchez"])->insert();
+    $db->setFields(["nome" => "Kaique", "sobrenome" => "Menezes"])->insert();
+    $db->commit();
+} catch (\Throwable $throwable) {
+    $db->rollback();
+    // faça alguma coisa com o erro (sério... um log, talvez)
+}
+```
+
+## 4. Pendências do projeto
 
 | S | Descrição |
 | ------ | ----------- |
@@ -372,7 +423,7 @@ E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seria
 | ❌ | Recurso: TRUNCATE MULTIPLE TABLES |
 | ❌ | Recurso: DROP (table) |
 
-## 4. Recursos disponíveis:
+## 5. Recursos disponíveis:
 
 - SELECT
 - SELECT + JOIN
@@ -385,3 +436,4 @@ E então todas as linhas do banco onde `nome='Kaique'` fosse satisfatório seria
 - TRUNCATE
 - CREATE DATABASE
 - JOIN de diferentes SCHEMAS
+- TRANSACTION
