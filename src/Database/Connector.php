@@ -13,6 +13,7 @@ use ArrayDB\Exceptions\WorthlessVariableException;
 use ArrayDB\Exceptions\WrongTypeException;
 use ArrayDB\Utils\ArrayHelper;
 use ArrayDB\Utils\StringHelper;
+use Throwable;
 
 class Connector
 {
@@ -564,6 +565,41 @@ class Connector
             $this->connection->useSchema($schema);
         }
         return $created;
+    }
+
+    public function beginTransaction(int $flags = 0, ?string $name = null): void
+    {
+        // TODO: create simple way to use native flags
+        $this->connection->beginTransaction($flags, $name);
+    }
+
+    public function commit(int $flags = -1, ?string $name = null): void
+    {
+        // TODO: create simple way to use native flags
+        $this->connection->commit($flags, $name);
+    }
+
+    public function rollback(int $flags = 0, ?string $name = null): void
+    {
+        // TODO: create simple way to use native flags
+        $this->connection->rollback($flags, $name);
+    }
+
+    /**
+     * @param callable $closure
+     * @throws Throwable
+     */
+    public function transact(callable $closure): void
+    {
+        // TODO: add options as flags and names to each step
+        try {
+            $this->beginTransaction();
+            $closure();
+            $this->commit();
+        } catch (Throwable $throwable) {
+            $this->rollback();
+            throw $throwable;
+        }
     }
 
     /**

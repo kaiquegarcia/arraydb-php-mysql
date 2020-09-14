@@ -231,6 +231,43 @@ class Mysql
     }
 
     /**
+     * @param int $flags
+     * @param string|null $name
+     */
+    public function beginTransaction(int $flags = 0, ?string $name = null): void
+
+    {
+        if(!$this->con) {
+            return;
+        }
+        $this->con->begin_transaction($flags, $name);
+    }
+
+    /**
+     * @param int $flags
+     * @param string|null $name
+     */
+    public function commit(int $flags = -1, ?string $name = null): void
+    {
+        if(!$this->con) {
+            return;
+        }
+        $this->con->commit($flags, $name);
+    }
+
+    /**
+     * @param int $flags
+     * @param string|null $name
+     */
+    public function rollback(int $flags = 0, ?string $name = null): void
+    {
+        if(!$this->con) {
+            return;
+        }
+        $this->con->rollback($flags, $name);
+    }
+
+    /**
      * @param array $settings
      * @throws UnexpectedValueException
      * @throws WrongTypeException
